@@ -3,10 +3,9 @@ import pandas as pd
 import os
 import re
 import joblib
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import export_graphviz
 from sklearn.metrics import make_scorer, accuracy_score, f1_score
 from imblearn.over_sampling import SMOTE
 
@@ -73,13 +72,14 @@ def treinar_modelo():
     grid = GridSearchCV(RandomForestClassifier(), param_grid, scoring={'accuracy': gs_metric_accuracy, 'f1': gs_metric_f1_score}, refit='f1', cv=5, n_jobs=4, verbose = 3)
     grid.fit(X_train, y_train)
 
-    random_forest_params = grid.best_params_
-
-    rf = RandomForestClassifier(class_weight='balanced', criterion='gini', max_depth=5, n_estimators=100, min_samples_leaf = 2, min_samples_split = 10)
+    
+    # Na Fase 1, imprimimos os melhores parâmetros encontrados e colocamos explicitamente
+    # rf = RandomForestClassifier(class_weight='balanced', criterion='gini', max_depth=5, n_estimators=100, min_samples_leaf = 2, min_samples_split = 10)
+    rf = grid.best_estimator_
 
     # Aplicando SMOTE
     sm = SMOTE()
-    X_train_resample, y_train_resample = sm.fit_resample(X, y)
+    X_train_resample, y_train_resample = sm.fit_resample(X_train, y_train)
 
     rf.fit(X_train_resample, y_train_resample)
     y_predito_random_forest_smote = rf.predict(X_test)
