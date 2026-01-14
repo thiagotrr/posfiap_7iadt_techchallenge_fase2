@@ -6,7 +6,7 @@ import joblib
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import make_scorer, accuracy_score, f1_score
+from sklearn.metrics import make_scorer, accuracy_score, f1_score, recall_score
 from imblearn.over_sampling import SMOTE
 
 def treinar_modelo():
@@ -68,8 +68,17 @@ def treinar_modelo():
     #gs: GridSearch
     gs_metric_accuracy = make_scorer(accuracy_score, greater_is_better=True)
     gs_metric_f1_score = make_scorer(f1_score, greater_is_better=True)
+    gs_metric_recall = make_scorer(recall_score, greater_is_better=True)
 
-    grid = GridSearchCV(RandomForestClassifier(), param_grid, scoring={'accuracy': gs_metric_accuracy, 'f1': gs_metric_f1_score}, refit='f1', cv=5, n_jobs=4, verbose = 3)
+    grid = GridSearchCV(
+        RandomForestClassifier(),
+        param_grid,
+        scoring={'accuracy': gs_metric_accuracy, 'f1': gs_metric_f1_score, 'recall': gs_metric_recall},
+        refit='f1',
+        cv=5,
+        n_jobs=4,
+        verbose = 3
+    )
     grid.fit(X_train, y_train)
 
     
@@ -84,9 +93,10 @@ def treinar_modelo():
     rf.fit(X_train_resample, y_train_resample)
     y_predito_random_forest_smote = rf.predict(X_test)
 
-    # Validação do Modelo: recuperando acurácia e f1-score
+    # Validação do Modelo: recuperando acurácia, f1-score e recall
     accuracy = accuracy_score(y_test, y_predito_random_forest_smote)
     f1score_value = f1_score(y_test, y_predito_random_forest_smote,  average='binary')
+    recall_value = recall_score(y_test, y_predito_random_forest_smote, average='binary')
 
     # Cross Validation
     kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -95,6 +105,7 @@ def treinar_modelo():
     validations = {
         "accuracy": accuracy,
         "f1_score": f1score_value,
+        "recall": recall_value,
         "cv_score": cv_score.mean()
     }
 
