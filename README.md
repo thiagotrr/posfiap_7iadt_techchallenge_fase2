@@ -4,6 +4,20 @@
 ## Projeto Fase 2: Otimização de Modelos de Diagnóstico
 O hospital precisa melhorar a precisão e eficiência dos modelos de diagnóstico desenvolvidos no Fase 1. O desafio é utilizar algoritmos genéticos para otimizar os hiperparâmetros desses modelos, além de  incorporar capacidades iniciais de processamento de linguagem natural por meio de LLMs para melhorar a interpretabilidade dos resultados para os profissionais de saúde.
 
+## Instalação e execução
+1. Fazer o clone do repositório;
+2. Instalar os pacotes a partir de requirements.txt, conforme exemplo:
+    ```bash
+    pip install -r requirements.txt
+    ```
+3. A partir da raiz do projeto, executar:
+    ```bash
+    python main.py
+     ```
+4. No browser, acessar:
+- Swagger: http://localhost:8181/docs
+- OpenAPI: http://localhost:8181/openapi.json
+
 ## Recap Fase 1
 ### Dataset: Indian Liver Patient Dataset
 A morte por cirrose hepática continua a aumentar, devido ao aumento nas taxas de consumo de álcool, infecções crônicas por hepatite e doenças hepáticas relacionadas à obesidade. Apesar da alta mortalidade dessa doença, as doenças do fígado não afetam todas as subpopulações de forma igual. A detecção precoce da patologia é determinante para o desfecho dos pacientes, mas as pacientes do sexo feminino parecem ser marginalizadas quando se trata do diagnóstico precoce de doenças hepáticas.

@@ -100,9 +100,9 @@ def treinar_modelo():
 
     df_random_forest_smote = pd.DataFrame(validations, index=["RandomForest SMOTE"])
     
-    return rf, df_random_forest_smote
+    return rf, scaler, df_random_forest_smote
 
-def salvar_modelo(modelo):
+def salvar_modelo(modelo, scaler):
     """
     Salva o modelo Scikit-Learn treinado em um arquivo versionado usando joblib.
 
@@ -125,10 +125,15 @@ def salvar_modelo(modelo):
     else:
         next_version = max(versions) + 1
 
+    artefatos = {
+        "model": modelo,
+        "scaler": scaler
+    }
+
     file_name = f'rdm_forest_smote_v{next_version}.joblib'
     file_path = os.path.join(models_dir, file_name)
 
-    joblib.dump(modelo, file_path)
+    joblib.dump(artefatos, file_path)
     print(f"Modelo salvo com sucesso em: {file_path}")
 
 def validar_existencia_modelo():
@@ -151,11 +156,11 @@ def validar_existencia_modelo():
 
 if __name__ == "__main__":
     print("Iniciando o treinamento do modelo...")
-    modelo_treinado, df_metricas = treinar_modelo()
+    modelo_treinado, scaler_treinado, df_metricas = treinar_modelo()
     
     print("\nMetricas de validacao do modelo:")
     print(df_metricas)
     print("\nModelo treinado com sucesso!")
     
     print("\nSalvando o modelo treinado...")
-    salvar_modelo(modelo_treinado)
+    salvar_modelo(modelo_treinado, scaler_treinado)
