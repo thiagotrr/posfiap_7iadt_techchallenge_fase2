@@ -7,9 +7,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.metrics import make_scorer, recall_score
 from imblearn.over_sampling import SMOTE
-import joblib
-import os
-import kagglehub as kh
 from sklearn.preprocessing import MinMaxScaler
 from .ferramentas_modelo import carregar_dataset, salvar_modelo
 
@@ -192,23 +189,11 @@ def otmgen_rdmforest_hepatico(
 
 
 # Exemplo de uso rápido
-# if __name__ == "__main__":
-#     import os
-#     import kagglehub as kh
-#     from sklearn.preprocessing import MinMaxScaler
+if __name__ == "__main__":
+    import os
+    import kagglehub as kh
+    from sklearn.preprocessing import MinMaxScaler
 
-#     path = kh.dataset_download("jeevannagaraj/indian-liver-patient-dataset")
-#     df = pd.read_csv(os.path.join(path, "Indian Liver Patient Dataset (ILPD).csv"))
-#     df = df.dropna(subset=["alkphos"])
-#     df["is_patient"] = df["is_patient"].replace(2, 0).astype(bool)
-
-#     features = ["age", "tot_bilirubin", "direct_bilirubin", "tot_proteins", "albumin", "ag_ratio", "sgpt", "sgot", "alkphos"]
-#     X = df[features].copy()
-#     y = df["is_patient"].copy()
-
-#     scaler = MinMaxScaler()
-#     X[features] = scaler.fit_transform(X[features])
-
-#     melhores, score, modelo = otmgen_rdmforest_hepatico(geracoes=6, tamanho_populacao=10, cv=3, semente=42)
-#     print("Melhores:", melhores)
-#     print("Recall (CV):", score)
+    melhores, score, modelo = otmgen_rdmforest_hepatico(geracoes=3, tamanho_populacao=6, cv=3, semente=42)
+    print("Melhores:", melhores)
+    print("Recall (CV):", score)
