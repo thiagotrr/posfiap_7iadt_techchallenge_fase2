@@ -43,3 +43,28 @@ class PredicaoResponse(BaseModel):
                 "consideracoes": "Considerações clínicas relevantes"
                 }
         }
+
+class TreinamentoModeloResponse(BaseModel):
+    mensagem: str = Field(..., description="Mensagem indicando o status do treinamento do modelo", examples=["Modelo treinado", "Modelo treinado com otimização"])
+    caminho_modelo: str = Field(..., description="Caminho onde o modelo treinado foi salvo", example="/modelos/modelo_treinado_v1.joblib")
+    metricas_validacao: dict = Field(..., description="Métricas de validação do modelo treinado", example={"acurácia": 0.85, "f1_score": 0.83, "recall": 0.82, "cv_score": 0.84})
+    hiperparametros: dict = Field(..., description="Hiperparâmetros do modelo treinado", example={"n_estimators": 100, "max_depth": 5, "criterion": "gini"})
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "mensagem": "Modelo treinado com sucesso.",
+                "caminho_modelo": "/modelos/modelo_treinado_v1.joblib",
+                "metricas_validacao": {
+                    "acurácia": 0.85,
+                    "f1_score": 0.83,
+                    "recall": 0.82,
+                    "cv_score": 0.84
+                },
+                "hiperparametros": {
+                    "n_estimators": 100,
+                    "max_depth": 5,
+                    "criterion": "gini"
+                }
+            }
+        }

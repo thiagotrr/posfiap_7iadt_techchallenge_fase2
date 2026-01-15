@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 import pandas as pd
 
-from .schemas import PacienteHepaticoRequest, PredicaoResponse
+from .schemas import PacienteHepaticoRequest, PredicaoResponse, TreinamentoModeloResponse
 from .carrega_modelo import carrega_modelo
 
 ml_items = {}
@@ -73,8 +73,36 @@ def treinar_novo_modelo():
     if caminho_salvo is None:
         raise HTTPException(status_code=503, detail="Erro ao salvar modelo treinado.")
 
-    return {
-        "mensagem": "Modelo treinado e salvo com sucesso.",
-        "caminho_modelo": caminho_salvo,
-        "metricas_validacao": df_metricas.to_dict(orient="records")
-    }
+    hiperparametros = None
+    if hasattr(modelo_treinado, "get_params"):
+        hiperparametros = modelo_treinado.get_params()
+    elif hasattr(modelo_treinado, "best_params_"):
+        hiperparametros = modelo_treinado.best_params_
+    elif hasattr(modelo_treinado, "best_estimator_") and hasattr(modelo_treinado.best_estimator_, "get_params"):
+        hiperparametros = modelo_treinado.best_estimator_.get_params()
+    else:
+        hiperparametros = {}
+
+    return TreinamentoModeloResponse(
+        mensagem="Modelo treinado e salvo com sucesso.",
+        caminho_modelo=caminho_salvo,
+        metricas_validacao=df_metricas.to_dict(orient="records"),
+        hiperparametros=hiperparametros
+    )
+@app.post("/otimizar_modelo", 
+          tags=["Treinamento de Modelo"],
+          summary="Otimiza hiperparâmetros do modelo RandomForest usando algoritmo genético",
+          include_in_schema=False
+          )
+def otimizar_modelo():
+    from ml.otimizador_modelo import otmgen_rdmforest_hepatico
+    
+    camminho_salvo = None
+    df_metricas = None
+
+    return TreinamentoModeloResponse(
+        mensagem="otimização concluída com sucesso.",
+        caminho_modelo=camminho_salvo, 
+        metricas_validacao=df_metricas.to_dict(orient="records"),  # Pode ser preenchido com métricas reais se disponível
+        hiperparametros={}  # Pode ser preenchido com os melhores hiperparâmetros encontrados
+    )
