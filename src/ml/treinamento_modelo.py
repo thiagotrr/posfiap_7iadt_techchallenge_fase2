@@ -1,8 +1,6 @@
-import kagglehub as kh
 import pandas as pd
 import os
-import re
-import joblib
+from .ferramentas_modelo import carregar_dataset, salvar_modelo
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
@@ -27,31 +25,12 @@ def treinar_modelo():
             - RandomForestClassifier: O objeto do modelo treinado.
             - pd.DataFrame: Um DataFrame com as métricas de validação (acurácia, F1-score, score da validação cruzada).
     """
-    path = kh.dataset_download("jeevannagaraj/indian-liver-patient-dataset")
-    print(f"Caminho para os arquivos: {path}")
-    df = pd.read_csv(os.path.join(path, "Indian Liver Patient Dataset (ILPD).csv"))
-
-    df = df.dropna(subset=['alkphos'])
-
-    df['is_patient'] = df['is_patient'].replace(2, 0)
-    df['is_patient'] = df['is_patient'].astype(bool)
-
-    dataset = df.copy()
-
-    main_features = ['age', 'tot_bilirubin', 'direct_bilirubin', 'tot_proteins', 'albumin', 'ag_ratio', 'sgpt', 'sgot', 'alkphos']
-
-    scaler = MinMaxScaler() #chamando o metodo de normalização dos dados (0-1)
-    dataset_minmax_scaler = dataset.copy()
-
-    dataset_minmax_scaler[main_features] = scaler.fit_transform(dataset_minmax_scaler[main_features])
-
-    X = dataset_minmax_scaler[main_features]
-    y = dataset_minmax_scaler['is_patient']
+    # Use shared loader that aplica o pipeline de tratamento
+    X, y, scaler = carregar_dataset()
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, stratify=y, random_state=42)
 
-
-    # Primeiros parâmetros testados
+    # Primeiros parâmetros testados em fase 1
     # param_grid = { "n_estimators":[12,25,50,100],
     #     "max_depth":[2,3,5,7],
     #     "random_state":[3,5,7,9,None],
@@ -113,39 +92,7 @@ def treinar_modelo():
     
     return rf, scaler, df_random_forest_smote
 
-def salvar_modelo(modelo, scaler):
-    """
-    Salva o modelo Scikit-Learn treinado em um arquivo versionado usando joblib.
-
-    Args:
-        modelo (sklearn.base.BaseEstimator): O objeto do modelo treinado a ser salvo.
-    """
-    models_dir = os.path.join('src', 'ml', 'models')
-    os.makedirs(models_dir, exist_ok=True)
-
-    # Lógica de versionamento
-    files = os.listdir(models_dir)
-    versions = []
-    for f in files:
-        match = re.match(r'rdm_forest_smote_v(\d+)\.joblib', f)
-        if match:
-            versions.append(int(match.group(1)))
-
-    if not versions:
-        next_version = 0
-    else:
-        next_version = max(versions) + 1
-
-    artefatos = {
-        "model": modelo,
-        "scaler": scaler
-    }
-
-    file_name = f'rdm_forest_smote_v{next_version}.joblib'
-    file_path = os.path.join(models_dir, file_name)
-
-    joblib.dump(artefatos, file_path)
-    print(f"Modelo salvo com sucesso em: {file_path}")
+# salvar_modelo agora é provisto por `ferramentas_modelo.salvar_modelo`
 
 def validar_existencia_modelo():
     """
@@ -174,4 +121,4 @@ if __name__ == "__main__":
     print("\nModelo treinado com sucesso!")
     
     print("\nSalvando o modelo treinado...")
-    salvar_modelo(modelo_treinado, scaler_treinado)
+    salvar_modelo(modelo_treinado, scaler=scaler_treinado)
