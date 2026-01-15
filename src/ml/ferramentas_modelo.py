@@ -71,3 +71,21 @@ def salvar_modelo(modelo, scaler=None, params: Optional[dict] = None, caminho_sa
 
     joblib.dump(artefatos, file_path)
     return file_path
+
+def validar_existencia_modelo():
+    """
+    Verifica se existe algum modelo treinado na pasta 'src/ml/models'.
+
+    Retorna:
+        bool: True se existir um modelo, False caso contrário.
+    """
+    models_dir = os.path.join('src', 'ml', 'models')
+    if not os.path.exists(models_dir):
+        return False
+
+    files = os.listdir(models_dir)
+    for f in files:
+        if f.endswith('.joblib'):
+            return True
+    
+    return False

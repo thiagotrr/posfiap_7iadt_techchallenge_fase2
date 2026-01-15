@@ -92,26 +92,6 @@ def treinar_modelo():
     
     return rf, scaler, df_random_forest_smote
 
-# salvar_modelo agora é provisto por `ferramentas_modelo.salvar_modelo`
-
-def validar_existencia_modelo():
-    """
-    Verifica se existe algum modelo treinado na pasta 'src/ml/models'.
-
-    Retorna:
-        bool: True se existir um modelo, False caso contrário.
-    """
-    models_dir = os.path.join('src', 'ml', 'models')
-    if not os.path.exists(models_dir):
-        return False
-
-    files = os.listdir(models_dir)
-    for f in files:
-        if f.endswith('.joblib'):
-            return True
-    
-    return False
-
 if __name__ == "__main__":
     print("Iniciando o treinamento do modelo...")
     modelo_treinado, scaler_treinado, df_metricas = treinar_modelo()
@@ -121,4 +101,4 @@ if __name__ == "__main__":
     print("\nModelo treinado com sucesso!")
     
     print("\nSalvando o modelo treinado...")
-    salvar_modelo(modelo_treinado, scaler=scaler_treinado)
+    

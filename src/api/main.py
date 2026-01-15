@@ -55,3 +55,26 @@ def predicao_paciente(paciente: PacienteHepaticoRequest):
         resultado=resultado,
         consideracoes= ("") ## LLM entra aqui para gerar considerações clínicas
     )
+
+@app.post("/treinar_modelo",
+          tags=["Treinamento de Modelo"],
+          summary="Treina um novo modelo de RandomForest com SMOTE e salva o modelo treinado"
+        )
+def treinar_novo_modelo():
+    from ml.treinamento_modelo import treinar_modelo
+    from ml.ferramentas_modelo import salvar_modelo
+
+    modelo_treinado, scaler_treinado, df_metricas = treinar_modelo()
+    # Erro se o treinamento não retornou um modelo
+    if modelo_treinado is None:
+        raise HTTPException(status_code=503, detail="Treinamento falhou: modelo não foi gerado.")
+
+    caminho_salvo = salvar_modelo(modelo_treinado, scaler=scaler_treinado)
+    if caminho_salvo is None:
+        raise HTTPException(status_code=503, detail="Erro ao salvar modelo treinado.")
+
+    return {
+        "mensagem": "Modelo treinado e salvo com sucesso.",
+        "caminho_modelo": caminho_salvo,
+        "metricas_validacao": df_metricas.to_dict(orient="records")
+    }
