@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 import pandas as pd
 
-from .schemas import PacienteHepaticoRequest, PredicaoResponse
+from .schemas import PacienteHepaticoRequest, PredicaoResponse, TreinamentoModeloResponse
 from .carrega_modelo import carrega_modelo
 
 ml_items = {}
@@ -54,4 +54,55 @@ def predicao_paciente(paciente: PacienteHepaticoRequest):
     return PredicaoResponse(
         resultado=resultado,
         consideracoes= ("") ## LLM entra aqui para gerar considerações clínicas
+    )
+
+@app.post("/treinar_modelo",
+          tags=["Treinamento de Modelo"],
+          summary="Treina um novo modelo de RandomForest com SMOTE e salva o modelo treinado"
+        )
+def treinar_novo_modelo():
+    from ml.treinamento_modelo import treinar_modelo
+    from ml.ferramentas_modelo import salvar_modelo
+
+    modelo_treinado, scaler_treinado, df_metricas = treinar_modelo()
+    # Erro se o treinamento não retornou um modelo
+    if modelo_treinado is None:
+        raise HTTPException(status_code=503, detail="Treinamento falhou: modelo não foi gerado.")
+
+    caminho_salvo = salvar_modelo(modelo_treinado, scaler=scaler_treinado)
+    if caminho_salvo is None:
+        raise HTTPException(status_code=503, detail="Erro ao salvar modelo treinado.")
+
+    hiperparametros = None
+    if hasattr(modelo_treinado, "get_params"):
+        hiperparametros = modelo_treinado.get_params()
+    elif hasattr(modelo_treinado, "best_params_"):
+        hiperparametros = modelo_treinado.best_params_
+    elif hasattr(modelo_treinado, "best_estimator_") and hasattr(modelo_treinado.best_estimator_, "get_params"):
+        hiperparametros = modelo_treinado.best_estimator_.get_params()
+    else:
+        hiperparametros = {}
+
+    return TreinamentoModeloResponse(
+        mensagem="Modelo treinado e salvo com sucesso.",
+        caminho_modelo=caminho_salvo,
+        metricas_validacao=df_metricas.to_dict(orient="records"),
+        hiperparametros=hiperparametros
+    )
+@app.post("/otimizar_modelo", 
+          tags=["Treinamento de Modelo"],
+          summary="Otimiza hiperparâmetros do modelo RandomForest usando algoritmo genético",
+          include_in_schema=False
+          )
+def otimizar_modelo():
+    from ml.otimizador_modelo import otmgen_rdmforest_hepatico
+    
+    camminho_salvo = None
+    df_metricas = None
+
+    return TreinamentoModeloResponse(
+        mensagem="otimização concluída com sucesso.",
+        caminho_modelo=camminho_salvo, 
+        metricas_validacao=df_metricas.to_dict(orient="records"),  # Pode ser preenchido com métricas reais se disponível
+        hiperparametros={}  # Pode ser preenchido com os melhores hiperparâmetros encontrados
     )
