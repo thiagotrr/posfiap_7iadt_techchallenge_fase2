@@ -1,6 +1,7 @@
 import pandas as pd
 import os
-from .ferramentas_modelo import carregar_dataset, salvar_modelo
+import re
+from .ferramentas_modelo import carregar_dataset, salvar_modelo, gerar_identificador_hex
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
@@ -101,4 +102,29 @@ if __name__ == "__main__":
     print("\nModelo treinado com sucesso!")
     
     print("\nSalvando o modelo treinado...")
+    # Gerar identificador baseado em dia-mes-ano-hora
+    identificador = gerar_identificador_hex()
+
+    # Preparar pasta de modelos e calcular próxima versão para este identificador
+    models_dir = os.path.join('src', 'ml', 'models')
+    os.makedirs(models_dir, exist_ok=True)
+
+    files = os.listdir(models_dir)
+    versions = []
+    pattern = rf'rdm_forest_smote_{identificador}_v(\d+)\.joblib'
+    for f in files:
+        match = re.match(pattern, f)
+        if match:
+            versions.append(int(match.group(1)))
+
+    if not versions:
+        next_version = 0
+    else:
+        next_version = max(versions) + 1
+
+    file_name = f'rdm_forest_smote_{identificador}_v{next_version}.joblib'
+    file_path = os.path.join(models_dir, file_name)
+
+    salvo = salvar_modelo(modelo_treinado, scaler_treinado, params=None, caminho_salvar=file_path)
+    print(f"Modelo salvo em: {salvo}")
     
