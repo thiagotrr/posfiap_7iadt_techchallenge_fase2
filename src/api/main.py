@@ -4,6 +4,7 @@ import pandas as pd
 
 from .schemas import PacienteHepaticoRequest, PredicaoResponse, TreinamentoModeloResponse
 from .carrega_modelo import carrega_modelo
+from llm import gerar_consideracoes_clinicas
 
 ml_items = {}
 
@@ -26,12 +27,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-@app.post("/predicao", 
-          tags=["Modelo de Predição"],
-          response_model=PredicaoResponse, 
-          summary="Prediz se o paciente tem doença hepática"
-        )
-def predicao_paciente(paciente: PacienteHepaticoRequest):
+def obter_predicao(paciente: PacienteHepaticoRequest) -> str:
     if "model" not in ml_items:
         raise HTTPException(status_code=503, detail="Modelo não carregado ou indisponível.")
         
@@ -51,9 +47,42 @@ def predicao_paciente(paciente: PacienteHepaticoRequest):
     predicao = model.predict(X_input)
 
     resultado = "Potencial paciente." if predicao[0] == 1 else "Não é paciente."
+    return resultado
+
+@app.post("/predicao", 
+          tags=["Modelo de Predição"],
+          response_model=PredicaoResponse, 
+          summary="Prediz se o paciente tem doença hepática (resposta crua do ML)"
+        )
+def predicao_paciente(paciente: PacienteHepaticoRequest):
+    resultado = obter_predicao(paciente)
     return PredicaoResponse(
         resultado=resultado,
-        consideracoes= ("") ## LLM entra aqui para gerar considerações clínicas
+        consideracoes=""
+    )
+
+@app.post("/predicao-llm", 
+          tags=["Modelo de Predição"],
+          response_model=PredicaoResponse, 
+          summary="Prediz se o paciente tem doença hepática com considerações clínicas geradas por LLM"
+        )
+def predicao_paciente_llm(paciente: PacienteHepaticoRequest):
+    resultado = obter_predicao(paciente)
+    
+    try:
+        consideracoes = gerar_consideracoes_clinicas(
+            dados_paciente=paciente.model_dump(),
+            resultado_predicao=resultado
+        )
+
+        if consideracoes is None:
+            consideracoes = "Erro ao gerar considerações."
+    except Exception as e:
+        consideracoes = f"Erro ao gerar considerações: {str(e)}."
+    
+    return PredicaoResponse(
+        resultado=resultado,
+        consideracoes=consideracoes or ""
     )
 
 @app.post("/treinar_modelo",

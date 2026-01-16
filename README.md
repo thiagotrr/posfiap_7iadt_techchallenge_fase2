@@ -10,11 +10,19 @@ O hospital precisa melhorar a precisão e eficiência dos modelos de diagnóstic
     ```bash
     pip install -r requirements.txt
     ```
-3. A partir da raiz do projeto, executar:
+3. (Opcional) Configurar a Google API Key para usar o endpoint `/predicao-llm`:
+   - Crie um arquivo `.env` na raiz do projeto
+   - Adicione sua chave de API do Google:
+     ```
+     GOOGLE_API_KEY=sua-chave-aqui
+     ```
+   - Para obter uma chave de API, consulte a documentação oficial: [https://ai.google.dev/gemini-api/docs/api-key?hl=pt-br](https://ai.google.dev/gemini-api/docs/api-key?hl=pt-br)
+   - **Nota**: O endpoint `/predicao-llm` funciona sem a API key, retornando uma mensagem padrão baseada nos dados do paciente. A API key é necessária para gerar considerações clínicas mais detalhadas usando a LLM do Google Gemini.
+4. A partir da raiz do projeto, executar:
     ```bash
     python main.py
      ```
-4. No browser, acessar:
+5. No browser, acessar:
 - Swagger: http://localhost:8181/docs
 - OpenAPI: http://localhost:8181/openapi.json
 

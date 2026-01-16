@@ -40,7 +40,7 @@ class PredicaoResponse(BaseModel):
         json_schema_extra = {
             "example": {
                 "resultado": "Potencial paciente.",
-                "consideracoes": "Considerações clínicas relevantes"
+                "consideracoes": "Considerações clínicas relevantes descritas pela LLM"
                 }
         }
 
