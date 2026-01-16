@@ -1,9 +1,11 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
+from typing import Optional
 import pandas as pd
 
-from .schemas import PacienteHepaticoRequest, PredicaoResponse, TreinamentoModeloResponse, OtimizacaoRequest, FileDownloadResponse
+from .schemas import PacienteHepaticoRequest, PredicaoResponse, TreinamentoModeloResponse, ModeloIA, OtimizacaoRequest, FileDownloadResponse
 from .carrega_modelo import carrega_modelo
+from llm import gerar_consideracoes_clinicas
 from fastapi.responses import FileResponse
 import os
 
@@ -28,12 +30,8 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-@app.post("/predicao", 
-          tags=["Modelo de Predição"],
-          response_model=PredicaoResponse, 
-          summary="Prediz se o paciente tem doença hepática"
-        )
-def predicao_paciente(paciente: PacienteHepaticoRequest):
+
+def obter_predicao(paciente: PacienteHepaticoRequest) -> str:
     if "model" not in ml_items:
         raise HTTPException(status_code=503, detail="Modelo não carregado ou indisponível.")
         
@@ -53,9 +51,62 @@ def predicao_paciente(paciente: PacienteHepaticoRequest):
     predicao = model.predict(X_input)
 
     resultado = "Potencial paciente." if predicao[0] == 1 else "Não é paciente."
+    return resultado
+
+@app.post("/predicao", 
+          tags=["Modelo de Predição"],
+          response_model=PredicaoResponse, 
+          summary="Prediz se o paciente tem doença hepática (resposta crua do ML)"
+        )
+def predicao_paciente(paciente: PacienteHepaticoRequest):
+    resultado = obter_predicao(paciente)
     return PredicaoResponse(
         resultado=resultado,
-        consideracoes= ("") ## LLM entra aqui para gerar considerações clínicas
+        consideracoes=""
+    )
+
+@app.post("/predicao-llm", 
+          tags=["Modelo de Predição"],
+          response_model=PredicaoResponse, 
+          summary="Prediz se o paciente tem doença hepática com considerações clínicas geradas por LLM"
+        )
+def predicao_paciente_llm(
+    requisicao: PacienteHepaticoRequest,
+    modelo_ia: ModeloIA = Query(
+        default=ModeloIA.GOOGLE_GEMINI_FLASH,
+    )
+):
+    resultado = obter_predicao(requisicao)
+    modelo_ia_str = modelo_ia.value
+    
+    try:
+        consideracoes = gerar_consideracoes_clinicas(
+            dados_paciente=requisicao.model_dump(),
+            resultado_predicao=resultado,
+            modelo_ia=modelo_ia_str
+        )
+        
+        if consideracoes is None or "ERRO:" in consideracoes.upper():
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erro ao gerar considerações clínicas com modelo {modelo_ia_str}"
+            )
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao processar requisição: {str(e)}"
+        )
+    
+    return PredicaoResponse(
+        resultado=resultado,
+        consideracoes=consideracoes or ""
     )
 
 @app.post("/treinar_modelo",

@@ -4,21 +4,51 @@
 O hospital precisa melhorar a precisão e eficiência dos modelos de diagnóstico desenvolvidos na Fase 1. O desafio é utilizar algoritmos genéticos para otimizar os hiperparâmetros desses modelos, além de incorporar capacidades iniciais de processamento de linguagem natural por meio de LLMs para melhorar a interpretabilidade dos resultados para os profissionais de saúde.
 
 ## 🛠️ Instalação e execução
-1.  **Clone o repositório:**
-    ```bash
-    git clone <URL_DO_REPOSITORIO>
-    ```
-2.  **Instale as dependências** a partir do `requirements.txt`:
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  **Execute a aplicação** a partir da raiz do projeto:
-    ```bash
-    python main.py
-    ```
-4.  **Acesse a API** no seu navegador:
-    -   **Swagger UI**: [http://localhost:8181/docs](http://localhost:8181/docs) 接口
-    -   **OpenAPI JSON**: [http://localhost:8181/openapi.json](http://localhost:8181/openapi.json) 📄
+
+Este projeto utiliza [uv](https://docs.astral.sh/uv/guides/install-python/) ao invés de pip devido ao framework [CrewAI](https://docs.crewai.com/), que requer gerenciamento de dependências mais eficiente.
+
+### Pré-requisitos
+1. Instalar o [uv](https://docs.astral.sh/uv/guides/install-python/)
+2. Fazer o clone do repositório:
+   ```bash
+   git clone <URL_DO_REPOSITORIO>
+   ```
+
+### Instalação
+1. Instalar Python 3.12 usando uv:
+   ```bash
+   uv python install 3.12
+   ```
+
+2. Instalar as dependências do projeto:
+   ```bash
+   uv pip install -r requirements.txt
+   ```
+
+3. (Opcional) Configurar as API Keys para usar o endpoint `/predicao-llm`:
+   - Crie um arquivo `.env` na raiz do projeto
+   - Adicione as chaves de API dos modelos que deseja usar:
+     ```
+     OPENAI_API_KEY=sua-chave-openai-aqui
+     GROQ_API_KEY=sua-chave-groq-aqui
+     GOOGLE_API_KEY=sua-chave-google-aqui
+     ```
+   - **Modelos disponíveis e onde obter as API Keys:**
+     - `openai/gpt-4o-mini`: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+     - `groq/llama-3.3-70b-versatile`: [https://console.groq.com/keys](https://console.groq.com/keys)
+     - `google/gemini-3-flash-preview`: [https://aistudio.google.com/app/api-keys](https://aistudio.google.com/app/api-keys)
+   - **Nota**: O endpoint `/predicao-llm` funciona sem as API keys, retornando uma mensagem padrão baseada nos dados do paciente. As API keys são necessárias para gerar considerações clínicas mais detalhadas usando os modelos de LLM.
+
+### Execução
+A partir da raiz do projeto, executar:
+```bash
+uv run python main.py
+```
+
+### Acessar a API
+No browser, acessar:
+- **Swagger UI**: [http://localhost:8181/docs](http://localhost:8181/docs)
+- **OpenAPI JSON**: [http://localhost:8181/openapi.json](http://localhost:8181/openapi.json)
 
 ## ✨ Features Projeto Fase 2
 
