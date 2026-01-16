@@ -1,11 +1,15 @@
 import os
 import re
 from typing import Tuple, Optional
+from datetime import datetime
+import hashlib
 
 import joblib
 import pandas as pd
 import kagglehub as kh
 from sklearn.preprocessing import MinMaxScaler
+import base64
+from typing import List
 
 
 def carregar_dataset() -> Tuple[pd.DataFrame, pd.Series, MinMaxScaler]:
@@ -29,7 +33,7 @@ def carregar_dataset() -> Tuple[pd.DataFrame, pd.Series, MinMaxScaler]:
     return X, y, scaler
 
 
-def salvar_modelo(modelo, scaler=None, params: Optional[dict] = None, caminho_salvar: Optional[str] = None):
+def salvar_modelo(modelo, scaler=None, params: Optional[dict] = None, caminho_salvar: Optional[str] = None, id_hex: Optional[str] = None):
     """Salva o modelo.
 
     Se `caminho_salvar` for passado, salva diretamente nesse caminho incluindo `params` e `scaler` quando disponíveis.
@@ -44,6 +48,10 @@ def salvar_modelo(modelo, scaler=None, params: Optional[dict] = None, caminho_sa
             artefatos["scaler"] = scaler
         if params is not None:
             artefatos["params"] = params
+        # if an id_hex is provided and caminho_salvar is a filename, try to append id before extension
+        if id_hex:
+            base, ext = os.path.splitext(caminho_salvar)
+            caminho_salvar = f"{base}_{id_hex}{ext}"
         joblib.dump(artefatos, caminho_salvar)
         return caminho_salvar
 
@@ -66,11 +74,26 @@ def salvar_modelo(modelo, scaler=None, params: Optional[dict] = None, caminho_sa
     if params is not None:
         artefatos["params"] = params
 
-    file_name = f'rdm_forest_smote_v{next_version}.joblib'
+    if id_hex:
+        file_name = f'rdm_forest_smote_v{next_version}_{id_hex}.joblib'
+    else:
+        file_name = f'rdm_forest_smote_v{next_version}.joblib'
     file_path = os.path.join(models_dir, file_name)
 
     joblib.dump(artefatos, file_path)
     return file_path
+
+
+def gerar_identificador_hex(dt: Optional[datetime] = None) -> str:
+    """Gera um identificador hexadecimal de 6 caracteres usando dia-mes-ano-hora como chave.
+
+    Se `dt` não for fornecido, usa `datetime.now()`.
+    """
+    if dt is None:
+        dt = datetime.now()
+    chave = dt.strftime("%Y%m%d_%H%M%S")
+    digest = hashlib.md5(chave.encode()).hexdigest()
+    return digest[:6]
 
 def validar_existencia_modelo():
     """
@@ -89,3 +112,67 @@ def validar_existencia_modelo():
             return True
     
     return False
+
+
+def _localizar_arquivo_por_id(diretorio: str, id_hex: str, extensoes: List[str]) -> Optional[str]:
+    """Procura por um arquivo em `diretorio` que contenha o sufixo _{id_hex} antes da extensão.
+
+    Retorna o caminho completo do arquivo encontrado ou None.
+    """
+    if not os.path.exists(diretorio):
+        return None
+
+    for nome in os.listdir(diretorio):
+        for ext in extensoes:
+            if nome.endswith(f"_{id_hex}{ext}"):
+                return os.path.join(diretorio, nome)
+    return None
+
+
+def encode_file_base64(caminho_arquivo: str) -> Optional[dict]:
+    """Lê um arquivo e retorna um dicionário com `filename` e `content_base64`.
+
+    Retorna None se o arquivo não existir.
+    """
+    if not caminho_arquivo or not os.path.exists(caminho_arquivo):
+        return None
+    with open(caminho_arquivo, "rb") as f:
+        dados = f.read()
+    conteudo_b64 = base64.b64encode(dados).decode("ascii")
+    return {"filename": os.path.basename(caminho_arquivo), "content_base64": conteudo_b64}
+
+
+def baixar_modelo_base64(id_hex: str) -> Optional[dict]:
+    """Localiza um modelo em `src/ml/models` com o sufixo _{id_hex} e retorna conteúdo codificado em base64."""
+    models_dir = os.path.join("src", "ml", "models")
+    caminho = _localizar_arquivo_por_id(models_dir, id_hex, [".joblib", ".pkl"])
+    if not caminho:
+        return None
+    return encode_file_base64(caminho)
+
+
+def baixar_log_base64(id_hex: str) -> Optional[dict]:
+    """Localiza um log em `src/ml/log` com o sufixo _{id_hex} e retorna conteúdo codificado em base64."""
+    logs_dir = os.path.join("src", "ml", "log")
+    caminho = _localizar_arquivo_por_id(logs_dir, id_hex, [".log", ".txt"])
+    if not caminho:
+        return None
+    return encode_file_base64(caminho)
+
+
+def localizar_caminho_modelo(id_hex: str) -> Optional[str]:
+    """Retorna o caminho do arquivo de modelo em `src/ml/models` que contenha o sufixo _{id_hex}.
+
+    Usado para downloads diretos via FileResponse.
+    """
+    models_dir = os.path.join("src", "ml", "models")
+    return _localizar_arquivo_por_id(models_dir, id_hex, [".joblib", ".pkl"])
+
+
+def localizar_caminho_log(id_hex: str) -> Optional[str]:
+    """Retorna o caminho do arquivo de log em `src/ml/log` que contenha o sufixo _{id_hex}.
+
+    Usado para downloads diretos via FileResponse.
+    """
+    logs_dir = os.path.join("src", "ml", "log")
+    return _localizar_arquivo_por_id(logs_dir, id_hex, [".log", ".txt"]) 

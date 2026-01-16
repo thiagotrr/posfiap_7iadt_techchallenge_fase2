@@ -106,29 +106,31 @@ def avaliar_solucao(solucao, indice_geracao, dados):
     return float(np.mean(scores))
 
 
-def otimizar_floresta_aleatoria(
-    geracoes: int = PADRAO_ENTRADA["geracoes"],
-    tamanho_populacao: int = PADRAO_ENTRADA["tamanho_populacao"],
-    k_torneio: int = PADRAO_ENTRADA["k_torneio"],
-    prob_cruzamento: float = PADRAO_ENTRADA["prob_cruzamento"],
-    prob_mutacao: float = PADRAO_ENTRADA["prob_mutacao"],
-    cv: int = PADRAO_ENTRADA["cv"],
-    semente: Optional[int] = PADRAO_ENTRADA["semente"],
-    caminho_salvar_modelo: Optional[str] = PADRAO_ENTRADA["caminho_salvar_modelo"],
-    caminho_log: Optional[str] = PADRAO_ENTRADA["caminho_log"],
-) -> Tuple[Dict[str, Any], float, RandomForestClassifier]:
+def otimizar_random_forest(
+                            geracoes: int = PADRAO_ENTRADA["geracoes"],
+                            tamanho_populacao: int = PADRAO_ENTRADA["tamanho_populacao"],
+                            k_torneio: int = PADRAO_ENTRADA["k_torneio"],
+                            prob_cruzamento: float = PADRAO_ENTRADA["prob_cruzamento"],
+                            prob_mutacao: float = PADRAO_ENTRADA["prob_mutacao"],
+                            cv: int = PADRAO_ENTRADA["cv"],
+                            semente: Optional[int] = PADRAO_ENTRADA["semente"],
+                            caminho_salvar_modelo: Optional[str] = PADRAO_ENTRADA["caminho_salvar_modelo"],
+                            caminho_log: Optional[str] = PADRAO_ENTRADA["caminho_log"],
+                            id_hex: Optional[str] = None,
+                        ) -> Tuple[Dict[str, Any], float, RandomForestClassifier]:
     # preparar pasta e arquivo de log
     logs_dir = os.path.join("src", "ml", "log")
     os.makedirs(logs_dir, exist_ok=True)
-    if caminho_log:
-        # se foi indicado um nome ou caminho, colocamos dentro da pasta de logs
-        caminho_log = os.path.join(logs_dir, os.path.basename(caminho_log))
-    else:
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        caminho_log = os.path.join(logs_dir, f"otm_rdmfst_{ts}.log")
 
-    logger = configurar_logger(caminho_log=caminho_log)
-    logger.info("Iniciando otimização com PyGAD (floresta aleatória)")
+    # sempre gerar nome padrão com timestamp e id (quando presente) para evitar nomes incorretos
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    suff = f"_{id_hex}" if id_hex else ""
+    caminho_log = os.path.join(logs_dir, f"otm_rdmfst_{ts}{suff}.log")
+
+    # criar um logger único por execução para evitar reuso de handlers
+    nome_logger = f"otimiza_modelo_{ts}{suff}"
+    logger = configurar_logger(nome=nome_logger, caminho_log=caminho_log)
+    logger.info("Iniciando otimização com PyGAD (Random Forest)")
 
     rnd = random.Random(semente)
 
@@ -227,13 +229,31 @@ def otimizar_floresta_aleatoria(
 
     if caminho_salvar_modelo:
         logger.info("Salvando modelo em %s", caminho_salvar_modelo)
-        salvar_modelo(modelo, scaler=scaler, params=melhor_params, caminho_salvar=caminho_salvar_modelo)
+        salvar_modelo(modelo, scaler=scaler, params=melhor_params, caminho_salvar=caminho_salvar_modelo, id_hex=id_hex)
 
     logger.info("Otimização finalizada. Melhor recall=%.4f", float(melhor_fitness))
+
+    # Garantir que handlers de arquivo sejam fechados e liberem o arquivo de log
+    for h in list(logger.handlers):
+        try:
+            if isinstance(h, logging.FileHandler):
+                try:
+                    h.flush()
+                except Exception:
+                    pass
+                try:
+                    h.close()
+                except Exception:
+                    pass
+                logger.removeHandler(h)
+        except Exception:
+            # não falhar o processo de retorno por causa de problemas com handlers
+            continue
+
     return melhor_params, float(melhor_fitness), modelo
 
 
 if __name__ == "__main__":
-    melhores, score, modelo = otimizar_floresta_aleatoria(geracoes=3, tamanho_populacao=6, cv=3, semente=42, caminho_log="otimizacao.log")
+    melhores, score, modelo = otimizar_random_forest(geracoes=3, tamanho_populacao=6, cv=3, semente=42, caminho_log="otimizacao.log")
     print("Melhores:", melhores)
     print("Recall (CV):", score)
