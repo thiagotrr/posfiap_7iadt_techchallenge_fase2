@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import Optional
 
 class PacienteHepaticoRequest(BaseModel):
     age: int = Field(..., description="Idade do paciente em anos", ge=0, le=100, example=39)
@@ -47,6 +48,7 @@ class PredicaoResponse(BaseModel):
 class TreinamentoModeloResponse(BaseModel):
     mensagem: str = Field(..., description="Mensagem indicando o status do treinamento do modelo", examples=["Modelo treinado", "Modelo treinado com otimização"])
     caminho_modelo: str = Field(..., description="Caminho onde o modelo treinado foi salvo", example="/modelos/modelo_treinado_v1.joblib")
+    id: str = Field(..., description="Identificador hexadecimal do experimento/treinamento", example="a1b2c3")
     metricas_validacao: dict = Field(..., description="Métricas de validação do modelo treinado", example={"acurácia": 0.85, "f1_score": 0.83, "recall": 0.82, "cv_score": 0.84})
     hiperparametros: dict = Field(..., description="Hiperparâmetros do modelo treinado", example={"n_estimators": 100, "max_depth": 5, "criterion": "gini"})
 
@@ -55,6 +57,7 @@ class TreinamentoModeloResponse(BaseModel):
             "example": {
                 "mensagem": "Modelo treinado com sucesso.",
                 "caminho_modelo": "/modelos/modelo_treinado_v1.joblib",
+                "id": "a1b2c3",
                 "metricas_validacao": {
                     "acurácia": 0.85,
                     "f1_score": 0.83,
@@ -66,5 +69,43 @@ class TreinamentoModeloResponse(BaseModel):
                     "max_depth": 5,
                     "criterion": "gini"
                 }
+            }
+        }
+
+
+class OtimizacaoRequest(BaseModel):
+    geracoes: int = Field(10, description="Número de gerações para o algoritmo genético", example=10, ge=1)
+    tamanho_populacao: int = Field(12, description="Tamanho da população por geração", example=12, ge=2)
+    k_torneio: int = Field(3, description="Tamanho do torneio para seleção dos pais", example=3, ge=2)
+    prob_cruzamento: float = Field(0.9, description="Probabilidade de cruzamento", example=0.9, ge=0.0, le=1.0)
+    prob_mutacao: float = Field(0.3, description="Probabilidade de mutação", example=0.3, ge=0.0, le=1.0)
+    cv: int = Field(3, description="Número de folds para cross-validation", example=3, ge=2)
+    semente: Optional[int] = Field(None, description="Semente aleatória (opcional)", example=42)
+    caminho_log: Optional[str] = Field(None, description="Nome do arquivo de log (opcional). Se não informado, será gerado automaticamente com timestamp e id")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "geracoes": 3,
+                "tamanho_populacao": 6,
+                "k_torneio": 3,
+                "prob_cruzamento": 0.9,
+                "prob_mutacao": 0.3,
+                "cv": 3,
+                "semente": 42,
+                "caminho_log": "otimizacao.log"
+            }
+        }
+
+
+class FileDownloadResponse(BaseModel):
+    filename: str = Field(..., description="Nome do arquivo retornado", example="rdm_forest_smote_v0_a1b2c3.joblib")
+    content_base64: str = Field(..., description="Conteúdo do arquivo codificado em base64", example="UEsDB...==")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "filename": "rdm_forest_smote_v0_a1b2c3.joblib",
+                "content_base64": "UEsDB...=="
             }
         }
