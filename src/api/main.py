@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
+from typing import Optional
 import pandas as pd
 
-from .schemas import PacienteHepaticoRequest, PredicaoResponse, TreinamentoModeloResponse
+from .schemas import PacienteHepaticoRequest, PredicaoResponse, TreinamentoModeloResponse, ModeloIA
 from .carrega_modelo import carrega_modelo
 from llm import gerar_consideracoes_clinicas
 
@@ -26,6 +27,7 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
 
 def obter_predicao(paciente: PacienteHepaticoRequest) -> str:
     if "model" not in ml_items:
@@ -66,19 +68,39 @@ def predicao_paciente(paciente: PacienteHepaticoRequest):
           response_model=PredicaoResponse, 
           summary="Prediz se o paciente tem doença hepática com considerações clínicas geradas por LLM"
         )
-def predicao_paciente_llm(paciente: PacienteHepaticoRequest):
-    resultado = obter_predicao(paciente)
+def predicao_paciente_llm(
+    requisicao: PacienteHepaticoRequest,
+    modelo_ia: ModeloIA = Query(
+        default=ModeloIA.GOOGLE_GEMINI_FLASH,
+    )
+):
+    resultado = obter_predicao(requisicao)
+    modelo_ia_str = modelo_ia.value
     
     try:
         consideracoes = gerar_consideracoes_clinicas(
-            dados_paciente=paciente.model_dump(),
-            resultado_predicao=resultado
+            dados_paciente=requisicao.model_dump(),
+            resultado_predicao=resultado,
+            modelo_ia=modelo_ia_str
         )
-
-        if consideracoes is None:
-            consideracoes = "Erro ao gerar considerações."
+        
+        if consideracoes is None or "ERRO:" in consideracoes.upper():
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erro ao gerar considerações clínicas com modelo {modelo_ia_str}"
+            )
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
     except Exception as e:
-        consideracoes = f"Erro ao gerar considerações: {str(e)}."
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao processar requisição: {str(e)}"
+        )
     
     return PredicaoResponse(
         resultado=resultado,

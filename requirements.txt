@@ -10,4 +10,6 @@ uvicorn==0.40.0
 pygad==2.19.0
 cloudpickle==3.1.2
 python-dotenv==1.0.0
-google-genai==0.2.2
+setuptools>=65.0.0
+requests>=2.31.0
+crewai==0.80.0

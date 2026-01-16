@@ -5,24 +5,46 @@
 O hospital precisa melhorar a precisão e eficiência dos modelos de diagnóstico desenvolvidos no Fase 1. O desafio é utilizar algoritmos genéticos para otimizar os hiperparâmetros desses modelos, além de  incorporar capacidades iniciais de processamento de linguagem natural por meio de LLMs para melhorar a interpretabilidade dos resultados para os profissionais de saúde.
 
 ## Instalação e execução
-1. Fazer o clone do repositório;
-2. Instalar os pacotes a partir de requirements.txt, conforme exemplo:
-    ```bash
-    pip install -r requirements.txt
-    ```
-3. (Opcional) Configurar a Google API Key para usar o endpoint `/predicao-llm`:
+
+Este projeto utiliza [uv](https://docs.astral.sh/uv/guides/install-python/) ao invés de pip devido ao framework [CrewAI](https://docs.crewai.com/), que requer gerenciamento de dependências mais eficiente.
+
+### Pré-requisitos
+1. Instalar o [uv](https://docs.astral.sh/uv/guides/install-python/)
+2. Fazer o clone do repositório
+
+### Instalação
+1. Instalar Python 3.12 usando uv:
+   ```bash
+   uv python install 3.12
+   ```
+
+2. Instalar as dependências do projeto:
+   ```bash
+   uv pip install -r requirements.txt
+   ```
+
+3. (Opcional) Configurar as API Keys para usar o endpoint `/predicao-llm`:
    - Crie um arquivo `.env` na raiz do projeto
-   - Adicione sua chave de API do Google:
+   - Adicione as chaves de API dos modelos que deseja usar:
      ```
-     GOOGLE_API_KEY=sua-chave-aqui
+     OPENAI_API_KEY=sua-chave-openai-aqui
+     GROQ_API_KEY=sua-chave-groq-aqui
+     GOOGLE_API_KEY=sua-chave-google-aqui
      ```
-   - Para obter uma chave de API, consulte a documentação oficial: [https://ai.google.dev/gemini-api/docs/api-key?hl=pt-br](https://ai.google.dev/gemini-api/docs/api-key?hl=pt-br)
-   - **Nota**: O endpoint `/predicao-llm` funciona sem a API key, retornando uma mensagem padrão baseada nos dados do paciente. A API key é necessária para gerar considerações clínicas mais detalhadas usando a LLM do Google Gemini.
-4. A partir da raiz do projeto, executar:
-    ```bash
-    python main.py
-     ```
-5. No browser, acessar:
+   - **Modelos disponíveis e onde obter as API Keys:**
+     - `openai/gpt-4o-mini`: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+     - `groq/llama-3.3-70b-versatile`: [https://console.groq.com/keys](https://console.groq.com/keys)
+     - `google/gemini-3-flash-preview`: [https://aistudio.google.com/app/api-keys](https://aistudio.google.com/app/api-keys)
+   - **Nota**: O endpoint `/predicao-llm` funciona sem as API keys, retornando uma mensagem padrão baseada nos dados do paciente. As API keys são necessárias para gerar considerações clínicas mais detalhadas usando os modelos de LLM.
+
+### Execução
+A partir da raiz do projeto, executar:
+```bash
+uv run python main.py
+```
+
+### Acessar a API
+No browser, acessar:
 - Swagger: http://localhost:8181/docs
 - OpenAPI: http://localhost:8181/openapi.json
 
