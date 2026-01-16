@@ -1,5 +1,4 @@
-# 🤖 posfiap_7iadt_techchallenge_fase2
-# 🏆 Tech Challenge Fase 2 - Pós Tech IA para Devs (Turma 7)
+# 🏆 Tech Challenge Fase 2 - Pós Tech IA para Devs (posfiap_7iadt_techchallenge_fase2)
 
 ## 🎯 Projeto Fase 2: Otimização de Modelos de Diagnóstico
 O hospital precisa melhorar a precisão e eficiência dos modelos de diagnóstico desenvolvidos na Fase 1. O desafio é utilizar algoritmos genéticos para otimizar os hiperparâmetros desses modelos, além de incorporar capacidades iniciais de processamento de linguagem natural por meio de LLMs para melhorar a interpretabilidade dos resultados para os profissionais de saúde.
