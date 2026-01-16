@@ -2,8 +2,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 import pandas as pd
 
-from .schemas import PacienteHepaticoRequest, PredicaoResponse, TreinamentoModeloResponse
+from .schemas import PacienteHepaticoRequest, PredicaoResponse, TreinamentoModeloResponse, OtimizacaoRequest, FileDownloadResponse
 from .carrega_modelo import carrega_modelo
+from fastapi.responses import FileResponse
+import os
 
 ml_items = {}
 
@@ -89,20 +91,61 @@ def treinar_novo_modelo():
         metricas_validacao=df_metricas.to_dict(orient="records"),
         hiperparametros=hiperparametros
     )
+
 @app.post("/otimizar_modelo", 
           tags=["Treinamento de Modelo"],
           summary="Otimiza hiperparâmetros do modelo RandomForest usando algoritmo genético",
-          include_in_schema=False
           )
-def otimizar_modelo():
-    from ml.otimizador_modelo import otmgen_rdmforest_hepatico
-    
-    camminho_salvo = None
-    df_metricas = None
+def otimizar_modelo(req: OtimizacaoRequest):
+    from ml.otimiza_modelo import otimizar_random_forest
+    from ml.ferramentas_modelo import salvar_modelo, gerar_identificador_hex
+
+    id_hex = gerar_identificador_hex()
+
+    melhores, score, modelo = otimizar_random_forest(
+        geracoes=req.geracoes,
+        tamanho_populacao=req.tamanho_populacao,
+        k_torneio=req.k_torneio,
+        prob_cruzamento=req.prob_cruzamento,
+        prob_mutacao=req.prob_mutacao,
+        cv=req.cv,
+        semente=req.semente,
+        caminho_log=req.caminho_log,
+        id_hex=id_hex,
+    )
+
+    caminho_salvo = salvar_modelo(modelo, scaler=None, params=melhores, id_hex=id_hex)
+
+    metricas = {"recall_cv": score}
 
     return TreinamentoModeloResponse(
         mensagem="otimização concluída com sucesso.",
-        caminho_modelo=camminho_salvo, 
-        metricas_validacao=df_metricas.to_dict(orient="records"),  # Pode ser preenchido com métricas reais se disponível
-        hiperparametros={}  # Pode ser preenchido com os melhores hiperparâmetros encontrados
+        caminho_modelo=caminho_salvo,
+        id=id_hex,
+        metricas_validacao=metricas,
+        hiperparametros=melhores
     )
+
+
+@app.get("/modelo/{id_hex}", tags=["Downloads"], response_model=FileDownloadResponse, summary="Baixa um arquivo de modelo (*.joblib) por id retornado na requisição de treinamento ou otimização.")
+def baixar_modelo(id_hex: str):
+    from ml.ferramentas_modelo import localizar_caminho_modelo
+
+    caminho = localizar_caminho_modelo(id_hex)
+    if not caminho or not os.path.exists(caminho):
+        raise HTTPException(status_code=404, detail="Modelo não encontrado para o id fornecido.")
+
+    # Retornar como arquivo binário para download
+    return FileResponse(path=caminho, media_type="application/octet-stream", filename=os.path.basename(caminho))
+
+
+@app.get("/log/{id_hex}", tags=["Downloads"], response_model=FileDownloadResponse, summary="Baixa o arquivo de log (*.log) por id retornado na requisição de treinamento ou otimização.")
+def baixar_log(id_hex: str):
+    from ml.ferramentas_modelo import localizar_caminho_log
+
+    caminho = localizar_caminho_log(id_hex)
+    if not caminho or not os.path.exists(caminho):
+        raise HTTPException(status_code=404, detail="Log não encontrado para o id fornecido.")
+
+    # Retornar como arquivo de texto para download
+    return FileResponse(path=caminho, media_type="text/plain; charset=utf-8", filename=os.path.basename(caminho))
