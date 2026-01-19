@@ -1,0 +1,172 @@
+{
+	"info": {
+		"_postman_id": "00348afc-30b0-4e32-becf-9ce066ab430b",
+		"name": "FIAP - FASE 2",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "27864922"
+	},
+	"item": [
+		{
+			"name": "Predicao",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"age\": 39,\r\n    \"tot_bilirubin\": 1.2,\r\n    \"direct_bilirubin\": 0.5,\r\n    \"tot_proteins\": 6.5,\r\n    \"albumin\": 3.5,\r\n    \"ag_ratio\": 1.2,\r\n    \"sgpt\": 40.0,\r\n    \"sgot\": 40.0,\r\n    \"alkphos\": 210.0\r\n  }"
+				},
+				"url": {
+					"raw": "http://localhost:8181/predicao",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8181",
+					"path": [
+						"predicao"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Predicao com LLM",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"age\": 39,\r\n    \"tot_bilirubin\": 1.2,\r\n    \"direct_bilirubin\": 0.5,\r\n    \"tot_proteins\": 6.5,\r\n    \"albumin\": 3.5,\r\n    \"ag_ratio\": 1.2,\r\n    \"sgpt\": 40.0,\r\n    \"sgot\": 40.0,\r\n    \"alkphos\": 210.0\r\n  }"
+				},
+				"url": {
+					"raw": "http://localhost:8181/predicao-llm",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8181",
+					"path": [
+						"predicao-llm"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "treina modelo",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8181/treinar_modelo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8181",
+					"path": [
+						"treinar_modelo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Otimiza modelo",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"caminho_log\": \"otimizacao.log\",\r\n  \"cv\": 3,\r\n  \"geracoes\": 3,\r\n  \"k_torneio\": 3,\r\n  \"prob_cruzamento\": 0.9,\r\n  \"prob_mutacao\": 0.3,\r\n  \"semente\": 42,\r\n  \"tamanho_populacao\": 6\r\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8181/otimizar_modelo",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8181",
+					"path": [
+						"otimizar_modelo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Baixa arquivo modelo",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8181/modelo/f4566d",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8181",
+					"path": [
+						"modelo",
+						"f4566d"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Baixa arquivo de logs",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8181/log/f4566d",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8181",
+					"path": [
+						"log",
+						"f4566d"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
