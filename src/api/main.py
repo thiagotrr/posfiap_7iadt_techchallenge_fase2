@@ -16,8 +16,18 @@ async def lifespan(app: FastAPI):
     try:
         artefatos = carrega_modelo()
         ml_items["model"] = artefatos["model"]
-        ml_items["scaler"] = artefatos["scaler"]
-        ml_items["features"] = list(artefatos["scaler"].feature_names_in_)
+        
+        # Verificar se o scaler existe no modelo salvo
+        if "scaler" in artefatos and artefatos["scaler"] is not None:
+            ml_items["scaler"] = artefatos["scaler"]
+            ml_items["features"] = list(artefatos["scaler"].feature_names_in_)
+        else:
+            # Se não houver scaler, carregar um novo do dataset
+            from ml.ferramentas_modelo import carregar_dataset
+            _, _, scaler = carregar_dataset()
+            ml_items["scaler"] = scaler
+            ml_items["features"] = list(scaler.feature_names_in_)
+            print("Aviso: Modelo carregado sem scaler. Um novo scaler foi criado a partir do dataset.")
     except Exception as e:
         print(f"Erro ao carregar modelo: {e}")
     yield
@@ -34,6 +44,9 @@ app = FastAPI(
 def obter_predicao(paciente: PacienteHepaticoRequest) -> str:
     if "model" not in ml_items:
         raise HTTPException(status_code=503, detail="Modelo não carregado ou indisponível.")
+    
+    if "scaler" not in ml_items:
+        raise HTTPException(status_code=503, detail="Scaler não carregado ou indisponível.")
         
     model = ml_items["model"]
     scaler = ml_items["scaler"]
@@ -169,7 +182,10 @@ def otimizar_modelo(req: OtimizacaoRequest):
         id_hex=id_hex,
     )
 
-    caminho_salvo = salvar_modelo(modelo, scaler=None, params=melhores, id_hex=id_hex)
+    # Carregar o scaler para incluir no modelo salvo
+    from ml.ferramentas_modelo import carregar_dataset
+    _, _, scaler = carregar_dataset()
+    caminho_salvo = salvar_modelo(modelo, scaler=scaler, params=melhores, id_hex=id_hex)
 
     metricas = {"recall_cv": score}
 
