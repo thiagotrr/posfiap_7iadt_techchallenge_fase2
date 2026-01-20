@@ -151,7 +151,8 @@ def otimizar_random_forest(
 
     dados = (X, y, cv, semente)
 
-    def fitness_func(ga_instance, solucao, indice_solucao):
+
+    def fitness_func(solucao, indice_solucao):
         return avaliar_solucao(solucao, dados)
 
     num_genes = len(gene_space)

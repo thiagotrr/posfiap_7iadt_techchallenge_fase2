@@ -5,44 +5,39 @@ O hospital precisa melhorar a precisão e eficiência dos modelos de diagnóstic
 
 ## 🛠️ Instalação e execução
 
-Este projeto utiliza [uv](https://docs.astral.sh/uv/guides/install-python/) ao invés de pip devido ao framework [CrewAI](https://docs.crewai.com/), que requer gerenciamento de dependências mais eficiente.
-
 ### Pré-requisitos
-1. Instalar o [uv](https://docs.astral.sh/uv/guides/install-python/)
-2. Fazer o clone do repositório:
+1. Ter o **Python 3.12 ou 3.13** instalado na máquina
+2. Fazer o **clone do repositório**:
    ```bash
    git clone <URL_DO_REPOSITORIO>
    ```
 
 ### Instalação
-1. Instalar Python 3.12 usando uv:
+1. Criar e ativar um ambiente virtual (`venv`):
    ```bash
-   uv python install 3.12
+   python -m venv .venv
+   source .venv/bin/activate
    ```
 
 2. Instalar as dependências do projeto:
    ```bash
-   uv pip install -r requirements.txt
+   pip install -r requirements.txt
    ```
 
 3. (Opcional) Configurar as API Keys para usar o endpoint `/predicao-llm`:
    - Crie um arquivo `.env` na raiz do projeto
-   - Adicione as chaves de API dos modelos que deseja usar:
+   - Adicione a chave de API da Google:
      ```
-     OPENAI_API_KEY=sua-chave-openai-aqui
-     GROQ_API_KEY=sua-chave-groq-aqui
      GOOGLE_API_KEY=sua-chave-google-aqui
      ```
-   - **Modelos disponíveis e onde obter as API Keys:**
-     - `openai/gpt-4o-mini`: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-     - `groq/llama-3.3-70b-versatile`: [https://console.groq.com/keys](https://console.groq.com/keys)
+   - **Onde obter a API Key da Google**:
      - `google/gemini-3-flash-preview`: [https://aistudio.google.com/app/api-keys](https://aistudio.google.com/app/api-keys)
-   - **Nota**: O endpoint `/predicao-llm` funciona sem as API keys, retornando uma mensagem padrão baseada nos dados do paciente. As API keys são necessárias para gerar considerações clínicas mais detalhadas usando os modelos de LLM.
+   - **Nota**: O endpoint `/predicao-llm` funciona sem a API key, retornando uma mensagem padrão baseada nos dados do paciente. A `GOOGLE_API_KEY` é necessária para gerar considerações clínicas mais detalhadas usando a GenAI.
 
 ### Execução
 A partir da raiz do projeto, executar:
 ```bash
-uv run python main.py
+python main.py
 ```
 
 ### Acessar a API

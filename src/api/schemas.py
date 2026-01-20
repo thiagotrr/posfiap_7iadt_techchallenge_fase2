@@ -1,12 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
-from enum import Enum
-
-class ModeloIA(str, Enum):
-    OPENAI_GPT4O_MINI = "openai/gpt-4o-mini"
-    GROQ_LLAMA_70B = "groq/llama-3.3-70b-versatile"
-    GOOGLE_GEMINI_FLASH = "google/gemini-3-flash-preview"
-    DEFAULT = "default"  # Usa mensagem padrão sem LLM
 
 class PacienteHepaticoRequest(BaseModel):
     age: int = Field(..., description="Idade do paciente em anos", ge=0, le=100, example=39)
@@ -73,9 +66,6 @@ class PredicaoLLMRequest(BaseModel):
     )
     
     paciente: PacienteHepaticoRequest = Field(..., description="Dados do paciente")
-    modelo_ia: Optional[ModeloIA] = Field(
-        default=ModeloIA.DEFAULT,
-    )
 
 class TreinamentoModeloResponse(BaseModel):
     mensagem: str = Field(..., description="Mensagem indicando o status do treinamento do modelo", examples=["Modelo treinado", "Modelo treinado com otimização"])

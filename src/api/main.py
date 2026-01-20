@@ -1,9 +1,8 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Query
-from typing import Optional
+from fastapi import FastAPI, HTTPException
 import pandas as pd
 
-from .schemas import PacienteHepaticoRequest, PredicaoResponse, TreinamentoModeloResponse, ModeloIA, OtimizacaoRequest, FileDownloadResponse
+from .schemas import PacienteHepaticoRequest, PredicaoResponse, TreinamentoModeloResponse, OtimizacaoRequest, FileDownloadResponse
 from .carrega_modelo import carrega_modelo
 from llm import gerar_consideracoes_clinicas
 from fastapi.responses import FileResponse
@@ -78,48 +77,29 @@ def predicao_paciente(paciente: PacienteHepaticoRequest):
         consideracoes=""
     )
 
-@app.post("/predicao-llm", 
-          tags=["Modelo de Predição"],
-          response_model=PredicaoResponse, 
-          summary="Prediz se o paciente tem doença hepática com considerações clínicas geradas por LLM"
-        )
-def predicao_paciente_llm(
-    requisicao: PacienteHepaticoRequest,
-    modelo_ia: ModeloIA = Query(
-        default=ModeloIA.GOOGLE_GEMINI_FLASH,
-    )
-):
+@app.post(
+    "/predicao-llm",
+    tags=["Modelo de Predição"],
+    response_model=PredicaoResponse,
+    summary="Prediz se o paciente tem doença hepática com considerações clínicas geradas por LLM (GenAI Google)",
+)
+def predicao_paciente_llm(requisicao: PacienteHepaticoRequest):
     resultado = obter_predicao(requisicao)
-    modelo_ia_str = modelo_ia.value
-    
+
     try:
         consideracoes = gerar_consideracoes_clinicas(
             dados_paciente=requisicao.model_dump(),
             resultado_predicao=resultado,
-            modelo_ia=modelo_ia_str
-        )
-        
-        if consideracoes is None or "ERRO:" in consideracoes.upper():
-            raise HTTPException(
-                status_code=500,
-                detail=f"Erro ao gerar considerações clínicas com modelo {modelo_ia_str}"
-            )
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e)
         )
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Erro ao processar requisição: {str(e)}"
+            detail=f"Erro ao gerar considerações clínicas com GenAI: {str(e)}",
         )
-    
+
     return PredicaoResponse(
         resultado=resultado,
-        consideracoes=consideracoes or ""
+        consideracoes=consideracoes or "",
     )
 
 @app.post("/treinar_modelo",
