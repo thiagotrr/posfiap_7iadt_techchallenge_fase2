@@ -82,7 +82,7 @@ def list_para_parametros(solucao: list) -> Dict[str, Any]:
     }
 
 
-def avaliar_solucao(solucao, indice_geracao, dados):
+def avaliar_solucao(solucao, dados):
     # função de fitness para PyGAD; maximizar recall
     X, y, cv, semente = dados
     params = list_para_parametros(solucao)
@@ -151,9 +151,8 @@ def otimizar_random_forest(
 
     dados = (X, y, cv, semente)
 
-    # PyGAD espera retornar fitness float; queremos maximizar recall
-    def fitness_func(solucao, indice):
-        return avaliar_solucao(solucao, indice, dados)
+    def fitness_func(ga_instance, solucao, indice_solucao):
+        return avaliar_solucao(solucao, dados)
 
     num_genes = len(gene_space)
     num_parents = max(2, tamanho_populacao // 2)
